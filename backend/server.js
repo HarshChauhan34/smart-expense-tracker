@@ -1,6 +1,5 @@
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
@@ -35,28 +34,40 @@ const allowedOrigins = new Set([
   ...envOrigins,
 ]);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      const normalizedOrigin = normalizeOrigin(origin);
+app.use((req, res, next) => {
+  const requestOrigin = normalizeOrigin(req.headers.origin);
+  const isAllowed =
+    !requestOrigin ||
+    allowedOrigins.has(requestOrigin) ||
+    isAllowedVercelOrigin(requestOrigin);
 
-      if (
-        !origin ||
-        allowedOrigins.has(normalizedOrigin) ||
-        isAllowedVercelOrigin(normalizedOrigin)
-      ) {
-        callback(null, true);
-      } else {
-        callback(
-          new Error(
-            `Not allowed by CORS: ${normalizedOrigin || "unknown origin"}`,
-          ),
-        );
-      }
-    },
-    credentials: true,
-  }),
-);
+  if (isAllowed && requestOrigin) {
+    res.header("Access-Control-Allow-Origin", requestOrigin);
+    res.header("Vary", "Origin");
+  }
+
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(isAllowed ? 204 : 403);
+  }
+
+  if (!isAllowed) {
+    return res
+      .status(403)
+      .json({ message: `Not allowed by CORS: ${requestOrigin}` });
+  }
+
+  next();
+});
 
 app.use(express.json());
 
