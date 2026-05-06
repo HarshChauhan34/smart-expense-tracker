@@ -19,6 +19,10 @@ connectDB();
 const app = express();
 
 const normalizeOrigin = (value) => value?.trim().replace(/\/$/, "");
+const isAllowedVercelOrigin = (origin) => {
+  if (!origin) return false;
+  return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
+};
 
 const envOrigins = (process.env.FRONTEND_URL || "")
   .split(",")
@@ -36,7 +40,11 @@ app.use(
     origin: function (origin, callback) {
       const normalizedOrigin = normalizeOrigin(origin);
 
-      if (!origin || allowedOrigins.has(normalizedOrigin)) {
+      if (
+        !origin ||
+        allowedOrigins.has(normalizedOrigin) ||
+        isAllowedVercelOrigin(normalizedOrigin)
+      ) {
         callback(null, true);
       } else {
         callback(
