@@ -18,15 +18,32 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
+const normalizeOrigin = (value) => value?.trim().replace(/\/$/, "");
+
+const envOrigins = (process.env.FRONTEND_URL || "")
+  .split(",")
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  ...envOrigins,
+]);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      const normalizedOrigin = normalizeOrigin(origin);
+
+      if (!origin || allowedOrigins.has(normalizedOrigin)) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(
+          new Error(
+            `Not allowed by CORS: ${normalizedOrigin || "unknown origin"}`,
+          ),
+        );
       }
     },
     credentials: true,
