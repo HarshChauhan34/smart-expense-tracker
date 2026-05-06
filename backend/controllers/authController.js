@@ -19,6 +19,21 @@ const hashValue = (value) =>
   crypto.createHash("sha256").update(value).digest("hex");
 
 const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
+const trimTrailingSlash = (value = "") => value.replace(/\/+$/, "");
+const pickFrontendAppUrl = () => {
+  const preferred =
+    process.env.FRONTEND_APP_URL ||
+    process.env.PUBLIC_APP_URL ||
+    process.env.FRONTEND_URL ||
+    "http://localhost:5173";
+
+  const firstCandidate = preferred
+    .split(",")
+    .map((item) => item.trim())
+    .find(Boolean);
+
+  return trimTrailingSlash(firstCandidate || "http://localhost:5173");
+};
 
 export const registerUser = async (req, res) => {
   try {
@@ -370,7 +385,7 @@ export const forgotPassword = async (req, res) => {
     user.passwordResetExpires = new Date(Date.now() + 1000 * 60 * 15);
     await user.save();
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = pickFrontendAppUrl();
     const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
 
     const emailStatus = await sendPasswordResetEmail({

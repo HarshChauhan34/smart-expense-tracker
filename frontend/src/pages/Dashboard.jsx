@@ -110,8 +110,12 @@ function Dashboard() {
       setMonthlyData(monthlyRes.data);
       setRecentTransactions(transactionRes.data.slice(0, 5));
       setBudgetStatus(budgetRes.data);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setSummary({});
+      setCategoryData([]);
+      setMonthlyData([]);
+      setRecentTransactions([]);
+      setBudgetStatus(null);
     } finally {
       setLoading(false);
     }

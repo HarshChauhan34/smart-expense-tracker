@@ -55,8 +55,8 @@ function AppLayout({ children }) {
     try {
       const res = await getUnreadCount();
       setUnreadCount(res.data.count);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setUnreadCount(0);
     }
   };
   useEffect(() => {

@@ -167,7 +167,8 @@ Local defaults:
 PORT=5000
 MONGODB_URI=<your_mongodb_connection_string>
 JWT_SECRET=<strong_random_secret>
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=https://smart-expense-tracker-plum-three.vercel.app,http://localhost:5173
+FRONTEND_APP_URL=https://smart-expense-tracker-plum-three.vercel.app
 NODE_ENV=development
 
 MAIL_HOST=smtp.gmail.com
@@ -181,7 +182,8 @@ MAIL_FROM="SpendSense AI <no-reply@example.com>"
 ### Frontend (`frontend/.env`)
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=/api
+VITE_PROXY_TARGET=https://smart-expense-tracker-zaxi.onrender.com
 ```
 
 ## Available Scripts
@@ -243,11 +245,12 @@ Suggested split deployment:
 
 Deployment checklist:
 
-1. Set production `FRONTEND_URL` in backend.
-2. Set production `VITE_API_URL` in frontend.
-3. Configure SMTP credentials for OTP/reset flows.
-4. Use a strong `JWT_SECRET`.
-5. Restrict database user and network access.
+1. Set production `FRONTEND_URL` in backend (comma-separated allowlist).
+2. Set production `FRONTEND_APP_URL` in backend (single URL used in reset links).
+3. Keep frontend API base as `/api` and use `frontend/vercel.json` rewrite to backend.
+4. Configure SMTP credentials for OTP/reset flows.
+5. Use a strong `JWT_SECRET`.
+6. Restrict database user and network access.
 
 ## Roadmap
 

@@ -17,10 +17,12 @@ dotenv.config();
 connectDB();
 
 const app = express();
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
 
 const envOrigins = (process.env.FRONTEND_URL || "")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 
 const allowedOrigins = new Set([
@@ -32,10 +34,11 @@ const allowedOrigins = new Set([
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.has(origin)) {
+      const normalizedOrigin = origin?.trim().replace(/\/+$/, "");
+      if (!origin || allowedOrigins.has(normalizedOrigin)) {
         return callback(null, true);
       }
-      return callback(new Error(`Not allowed by CORS: ${origin}`));
+      return callback(new Error(`Not allowed by CORS: ${normalizedOrigin}`));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -43,10 +46,19 @@ app.use(
   }),
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 app.get("/", (req, res) => {
   res.send("Smart Expense Tracker API is running...");
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "smart-expense-tracker-api",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.use("/api/auth", authRoutes);
@@ -58,6 +70,20 @@ app.use("/api/recurring", recurringRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/pdf", pdfRoutes);
 app.use("/api/saving-goals", savingGoalRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message =
+    process.env.NODE_ENV === "production" && statusCode === 500
+      ? "Internal server error"
+      : err.message || "Something went wrong";
+
+  res.status(statusCode).json({ message });
+});
 
 const PORT = process.env.PORT || 5000;
 
