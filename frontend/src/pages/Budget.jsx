@@ -31,6 +31,7 @@ function Budget() {
 
   useEffect(() => {
     fetchBudgetStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.month, form.year]);
 
   const handleChange = (e) => {

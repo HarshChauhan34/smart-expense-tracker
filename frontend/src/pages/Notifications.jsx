@@ -29,7 +29,7 @@ function Notifications() {
       setLoading(true);
       const res = await getNotifications();
       setNotifications(res.data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load notifications");
     } finally {
       setLoading(false);
@@ -44,7 +44,7 @@ function Notifications() {
     try {
       await markNotificationAsRead(id);
       fetchNotifications();
-    } catch (error) {
+    } catch {
       toast.error("Failed to mark as read");
     }
   };
@@ -54,7 +54,7 @@ function Notifications() {
       await markAllNotificationsAsRead();
       toast.success("All notifications marked as read");
       fetchNotifications();
-    } catch (error) {
+    } catch {
       toast.error("Failed to mark all as read");
     }
   };
@@ -66,7 +66,7 @@ function Notifications() {
       toast.success("Notification deleted");
       setDeleteId(null);
       fetchNotifications();
-    } catch (error) {
+    } catch {
       toast.error("Delete failed");
     } finally {
       setDeleteLoading(false);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CalendarDays,
   PiggyBank,
@@ -87,7 +87,7 @@ function Dashboard() {
   const [filter, setFilter] = useState(initialFilter);
   const [appliedFilter, setAppliedFilter] = useState(initialFilter);
 
-  const fetchDashboardData = async (activeFilter = appliedFilter) => {
+  const fetchDashboardData = useCallback(async (activeFilter) => {
     try {
       setLoading(true);
 
@@ -119,11 +119,11 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDashboardData(appliedFilter);
-  }, [appliedFilter]);
+  }, [appliedFilter, fetchDashboardData]);
 
   const handleQuickFilterChange = (e) => {
     const value = e.target.value;

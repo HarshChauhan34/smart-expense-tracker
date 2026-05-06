@@ -38,7 +38,7 @@ function SavingGoals() {
       setLoading(true);
       const res = await getSavingGoals();
       setGoals(res.data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load saving goals");
     } finally {
       setLoading(false);
@@ -125,7 +125,7 @@ function SavingGoals() {
       toast.success("Saving goal deleted");
       setDeleteId(null);
       fetchGoals();
-    } catch (error) {
+    } catch {
       toast.error("Delete failed");
     } finally {
       setDeleteLoading(false);

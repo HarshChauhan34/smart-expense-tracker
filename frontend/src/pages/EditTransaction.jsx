@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Save } from "lucide-react";
 import toast from "react-hot-toast";
@@ -49,7 +49,7 @@ function EditTransaction() {
   const categories =
     form.type === "income" ? incomeCategories : expenseCategories;
 
-  const fetchTransaction = async () => {
+  const fetchTransaction = useCallback(async () => {
     try {
       setLoading(true);
       const res = await getTransactionById(id);
@@ -67,11 +67,11 @@ function EditTransaction() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchTransaction();
-  }, [id]);
+  }, [fetchTransaction]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

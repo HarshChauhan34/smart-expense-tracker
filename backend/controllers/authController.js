@@ -20,19 +20,50 @@ const hashValue = (value) =>
 
 const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 const trimTrailingSlash = (value = "") => value.replace(/\/+$/, "");
-const pickFrontendAppUrl = () => {
-  const preferred =
-    process.env.FRONTEND_APP_URL ||
-    process.env.PUBLIC_APP_URL ||
-    process.env.FRONTEND_URL ||
-    "http://localhost:5173";
+const parseHttpUrl = (value = "") => {
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return null;
+    }
+    const normalizedPath = trimTrailingSlash(url.pathname || "");
+    return `${url.origin}${normalizedPath === "/" ? "" : normalizedPath}`;
+  } catch {
+    return null;
+  }
+};
 
-  const firstCandidate = preferred
-    .split(",")
-    .map((item) => item.trim())
-    .find(Boolean);
+const normalizeOrigin = (value = "") => trimTrailingSlash(value.trim());
+const pickFrontendAppUrl = (req) => {
+  const requestOrigin = req?.headers?.origin?.trim() || "";
+  if (parseHttpUrl(requestOrigin)) {
+    return normalizeOrigin(requestOrigin);
+  }
 
-  return trimTrailingSlash(firstCandidate || "http://localhost:5173");
+  const candidates = [
+    process.env.FRONTEND_APP_URL,
+    process.env.PUBLIC_APP_URL,
+    ...(process.env.FRONTEND_URL || "").split(","),
+  ]
+    .map((item) => item?.trim())
+    .filter(Boolean)
+    .map((item) => parseHttpUrl(item))
+    .filter(Boolean);
+
+  if (candidates.length === 0) {
+    return "http://localhost:5173";
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  const productionCandidate = candidates.find(
+    (candidate) => !candidate.includes("localhost") && !candidate.includes("127.0.0.1")
+  );
+
+  if (isProduction && productionCandidate) {
+    return productionCandidate;
+  }
+
+  return candidates[0];
 };
 
 export const registerUser = async (req, res) => {
@@ -293,12 +324,16 @@ export const updateProfile = async (req, res) => {
 
     const updatedUser = await user.save();
 
+    const bearerToken = req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.split(" ")[1]
+      : null;
+
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
       phone: updatedUser.phone,
-      token: req.headers.authorization.split(" ")[1],
+      token: bearerToken || generateToken(updatedUser._id),
     });
   } catch (error) {
     res.status(500).json({
@@ -385,7 +420,7 @@ export const forgotPassword = async (req, res) => {
     user.passwordResetExpires = new Date(Date.now() + 1000 * 60 * 15);
     await user.save();
 
-    const frontendUrl = pickFrontendAppUrl();
+    const frontendUrl = pickFrontendAppUrl(req);
     const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
 
     const emailStatus = await sendPasswordResetEmail({

@@ -2,9 +2,19 @@ import { createContext, useContext, useState } from "react";
 
 const AuthContext = createContext();
 
+const getStoredJson = (key) => {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : null;
+  } catch {
+    localStorage.removeItem(key);
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    return JSON.parse(localStorage.getItem("expenseUser")) || null;
+    return getStoredJson("expenseUser");
   });
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -35,4 +45,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

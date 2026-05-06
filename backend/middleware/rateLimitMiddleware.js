@@ -1,5 +1,13 @@
 const store = new Map();
 
+const pruneExpiredEntries = (now) => {
+  for (const [key, entry] of store.entries()) {
+    if (now > entry.resetAt) {
+      store.delete(key);
+    }
+  }
+};
+
 const getClientIp = (req) => {
   const forwarded = req.headers["x-forwarded-for"];
   if (typeof forwarded === "string" && forwarded.length > 0) {
@@ -17,6 +25,10 @@ export const createRateLimiter = ({
     const ip = getClientIp(req);
     const key = `${ip}:${req.path}`;
     const now = Date.now();
+
+    if (store.size > 10000) {
+      pruneExpiredEntries(now);
+    }
 
     const entry = store.get(key);
 
@@ -36,4 +48,3 @@ export const createRateLimiter = ({
     next();
   };
 };
-

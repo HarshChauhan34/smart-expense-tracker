@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
@@ -86,7 +87,30 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+const shutdown = async (signal) => {
+  console.log(`Received ${signal}. Shutting down gracefully...`);
+
+  server.close(async () => {
+    try {
+      await mongoose.connection.close();
+      console.log("MongoDB connection closed.");
+      process.exit(0);
+    } catch (error) {
+      console.error("Error closing MongoDB connection:", error.message);
+      process.exit(1);
+    }
+  });
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
 });

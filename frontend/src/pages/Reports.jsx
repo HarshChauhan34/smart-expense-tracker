@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   Calendar,
@@ -52,7 +52,7 @@ function Reports() {
     }
   };
 
-  const fetchCategoryByMonth = async () => {
+  const fetchCategoryByMonth = useCallback(async () => {
     try {
       if (selectedMonth === "all") {
         const res = await getCategoryReport();
@@ -67,7 +67,7 @@ function Reports() {
     } catch {
       toast.error("Failed to load category report");
     }
-  };
+  }, [selectedMonth]);
 
   useEffect(() => {
     fetchReports();
@@ -75,7 +75,7 @@ function Reports() {
 
   useEffect(() => {
     fetchCategoryByMonth();
-  }, [selectedMonth]);
+  }, [fetchCategoryByMonth]);
 
   const monthOptions = useMemo(() => {
     return [
@@ -123,7 +123,7 @@ function Reports() {
       link.remove();
 
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch {
       toast.error("Failed to download PDF");
     }
   };
